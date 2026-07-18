@@ -21,10 +21,13 @@
 1. ZIP 압축을 새 폴더에 풉니다.
 2. `seller-gap-webapp-v0.5.0` 폴더로 들어갑니다.
 3. 최초 1회 `install.bat`을 실행합니다.
-4. 설치가 끝나면 `run.bat`을 실행합니다.
-5. 브라우저가 열리지 않으면 `http://127.0.0.1:8000`에 접속합니다.
+4. 쿠팡 로그인 표본을 사용할 경우 최초 1회 `coupang_login.bat`을 실행해 별도 Chrome 창에서 로그인합니다.
+5. `run.bat`을 실행합니다.
+6. 브라우저가 열리지 않으면 `http://127.0.0.1:8000`에 접속합니다.
 
 `install.bat`은 Chrome 검색결과를 읽기 위한 Python Playwright 패키지를 설치합니다. 별도의 Chromium을 내려받지 않고 PC에 설치된 Chrome을 우선 사용합니다.
+
+문법과 기본 계산을 확인하려면 `check.bat`을 실행합니다. `Validation passed.`가 나오면 Python 파일과 기본 쿠팡 통계 계산기가 정상입니다.
 
 ## API 설정
 
@@ -53,10 +56,10 @@ Application에 아래 두 기능을 등록합니다.
 
 권장 방식입니다.
 
-- 조사할 때 별도 Chrome 창이 열립니다.
-- 첫 실행에서 로그인이 필요하면 열린 창에서 쿠팡에 로그인합니다.
+- `coupang_login.bat`을 실행하고 열린 Chrome에서 쿠팡에 로그인합니다.
+- 로그인이 끝나면 검은 창으로 돌아가 Enter를 누릅니다.
 - 로그인 상태는 웹앱 폴더의 `data/browser-profile`에 저장됩니다.
-- 조사가 끝나면 Chrome 창이 자동으로 닫힙니다.
+- 조사할 때 같은 별도 프로필의 Chrome 창이 열리고 검색결과를 읽은 뒤 자동으로 닫힙니다.
 
 ### 서버 직접 요청
 
@@ -99,6 +102,7 @@ Chrome을 열지 않지만 쿠팡이 요청을 제한하면 상품을 읽지 못
 ## 보안
 
 - API 비밀키는 `data/config.json`에 평문으로 저장됩니다.
+- 쿠팡 로그인 쿠키는 `data/browser-profile`에 저장됩니다.
 - 폴더를 다른 사람에게 전달하기 전에 `data/config.json`과 `data/browser-profile`을 삭제하세요.
 - 공유 PC에서는 사용하지 않는 편이 안전합니다.
 
