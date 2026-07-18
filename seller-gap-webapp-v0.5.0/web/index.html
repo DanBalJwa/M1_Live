@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>셀러 갭 소싱 v0.5.0</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">셀러 갭 소싱 <span>v0.5.0</span></div>
+    <div class="top-actions">
+      <button class="ghost" id="refreshSettingsBtn">연결 상태</button>
+      <button class="dark" id="openSettingsBtn">API·수집 설정</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1>카테고리 소싱</h1>
+    <p>선택한 단계 아래의 후보 키워드를 생성하고 네이버와 쿠팡 검색상품 통계를 분리해 조사합니다.</p>
+    <div class="mode-tabs">
+      <button class="mode-tab active">카테고리 선택</button>
+      <button class="mode-tab" id="manualModeBtn">직접 키워드</button>
+    </div>
+    <div class="category-search" id="categorySearch">
+      <select id="cat1"><option value="">1차 분류</option></select>
+      <select id="cat2" disabled><option value="">2차 분류</option></select>
+      <select id="cat3" disabled><option value="">3차 분류</option></select>
+      <select id="cat4" disabled><option value="">4차 분류</option></select>
+      <input id="includedKeyword" placeholder="포함 키워드(선택)">
+      <select id="keywordLimit" title="생성할 키워드 수">
+        <option value="8">8개</option>
+        <option value="12" selected>12개</option>
+        <option value="20">20개</option>
+        <option value="30">30개</option>
+      </select>
+      <button id="categoryAnalyzeBtn" class="search-button" title="선택한 단계까지 조사">⌕</button>
+    </div>
+    <div class="manual-search hidden" id="manualSearch">
+      <input id="manualKeyword" placeholder="분석할 키워드를 입력하세요">
+      <button id="manualAnalyzeBtn" class="primary">키워드 분석</button>
+    </div>
+    <div class="helper">4차까지 전부 선택할 필요가 없습니다. <b>마지막으로 선택한 분류</b>를 기준으로 하위 키워드를 생성합니다.</div>
+  </section>
+
+  <main>
+    <div id="statusBox" class="status info">카테고리를 하나 이상 선택하세요.</div>
+
+    <section class="filter-panel">
+      <div class="filter-title">결과 필터</div>
+      <div class="filter-grid">
+        <label>키워드<input id="filterKeyword" placeholder="포함 검색"></label>
+        <label>네이버 월 검색량<input id="filterSearchMin" type="number" min="0" placeholder="최소"></label>
+        <label>쿠팡 평균가<input id="filterCoupangPriceMax" type="number" min="0" placeholder="최대"></label>
+        <label>쿠팡 로켓배송비율<input id="filterRocketMin" type="number" min="0" max="100" placeholder="최소 %"></label>
+        <label>쿠팡 평균 리뷰<input id="filterReviewMax" type="number" min="0" placeholder="최대"></label>
+        <label>표시 행 수<select id="rowLimit"><option>10</option><option selected>20</option><option>30</option></select></label>
+      </div>
+    </section>
+
+    <section class="result-section">
+      <div class="result-toolbar">
+        <div class="tabs" role="tablist">
+          <button class="tab active naver" data-tab="naver">N 네이버 상품</button>
+          <button class="tab coupang" data-tab="coupang">C 쿠팡</button>
+          <button class="tab compare" data-tab="compare">통합 비교</button>
+        </div>
+        <div class="result-meta" id="resultMeta">결과 없음</div>
+      </div>
+      <div class="table-wrap" id="tableWrap">
+        <div class="empty-state">카테고리 조사 결과가 여기에 표시됩니다.</div>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="settingsModal" aria-hidden="true">
+    <section class="modal settings-modal">
+      <div class="modal-head">
+        <div><h2>API·수집 설정</h2><p>비밀키는 이 PC의 <code>data/config.json</code>에만 저장됩니다.</p></div>
+        <button class="icon-button" data-close="settingsModal">×</button>
+      </div>
+
+      <div class="settings-grid">
+        <fieldset>
+          <legend>NAVER API HUB</legend>
+          <label>Client ID<input id="naverClientId"></label>
+          <label>Client Secret<input id="naverClientSecret" type="password" placeholder="기존 값 유지 시 비워두기"></label>
+          <label>기본 쇼핑 카테고리 코드<input id="naverCategoryCode" value="50000000"></label>
+          <p class="field-note">검색어 트렌드와 쇼핑 인사이트의 상대 추이를 조회합니다.</p>
+        </fieldset>
+
+        <fieldset>
+          <legend>네이버 검색광고 API <span class="optional">선택</span></legend>
+          <label>API Key<input id="searchAdApiKey"></label>
+          <label>Secret Key<input id="searchAdSecret" type="password" placeholder="기존 값 유지 시 비워두기"></label>
+          <label>Customer ID<input id="searchAdCustomerId"></label>
+          <p class="field-note">설정하면 PC·모바일 월 검색량과 연관 키워드를 추가합니다.</p>
+        </fieldset>
+
+        <fieldset>
+          <legend>쿠팡 상품 수집</legend>
+          <label>수집 방식
+            <select id="coupangMode">
+              <option value="browser">Chrome 로그인 세션 사용</option>
+              <option value="direct">서버 직접 요청</option>
+            </select>
+          </label>
+          <label class="check-row"><input id="browserVisible" type="checkbox" checked> 조사 중 Chrome 창 표시</label>
+          <label>최대 표본 상품 수<input id="sampleLimit" type="number" min="12" max="100" value="72"></label>
+          <p class="field-note">Chrome 방식은 <code>install.bat</code> 실행 후 사용할 수 있습니다. 별도 프로필에 로그인 상태가 저장됩니다.</p>
+        </fieldset>
+      </div>
+
+      <div class="connection-result" id="connectionResult">아직 연결 테스트를 하지 않았습니다.</div>
+      <div class="modal-actions">
+        <button class="secondary" data-close="settingsModal">닫기</button>
+        <button class="secondary" id="testConnectionsBtn">저장 후 연결 테스트</button>
+        <button class="primary" id="saveSettingsBtn">설정 저장</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop detail-backdrop" id="detailModal" aria-hidden="true">
+    <section class="modal detail-modal">
+      <div class="modal-head detail-head">
+        <div>
+          <div class="eyebrow">키워드 상세 분석</div>
+          <h2 id="detailTitle">키워드</h2>
+          <p id="detailCategory"></p>
+        </div>
+        <button class="icon-button" data-close="detailModal">×</button>
+      </div>
+      <div id="detailStatus" class="status info">분석 준비 중입니다.</div>
+      <div id="detailContent"></div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="htmlModal" aria-hidden="true">
+    <section class="modal html-modal">
+      <div class="modal-head">
+        <div><h2>쿠팡 저장 HTML 분석</h2><p>브라우저 수집이 막힌 경우 쿠팡 검색결과 페이지의 HTML을 붙여 넣습니다.</p></div>
+        <button class="icon-button" data-close="htmlModal">×</button>
+      </div>
+      <label>키워드<input id="htmlKeyword"></label>
+      <label>HTML<textarea id="coupangHtml" rows="15" placeholder="페이지 소스 또는 저장된 HTML 내용을 붙여 넣으세요"></textarea></label>
+      <div class="modal-actions">
+        <button class="secondary" data-close="htmlModal">닫기</button>
+        <button class="primary" id="analyzeHtmlBtn">HTML 분석</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
