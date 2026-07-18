@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>셀러 갭 소싱 v0.4.0</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><strong>셀러갭</strong><span>소싱리포트</span></div>
+  <div class="top-actions">
+    <button id="openApiSettings" class="link-button">API 설정</button>
+    <button id="exportCsv" class="dark-button">현재 탭 CSV</button>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <h1><span>카테고리</span> 소싱</h1>
+    <div class="mode-tabs">
+      <button class="active">카테고리 선택</button>
+      <button id="keywordModeButton">키워드 직접 조사</button>
+    </div>
+    <div id="categorySearchRow" class="category-search-row">
+      <select id="category1" aria-label="1차 분류"><option value="">1차 분류</option></select>
+      <select id="category2" aria-label="2차 분류" disabled><option value="">2차 분류</option></select>
+      <select id="category3" aria-label="3차 분류" disabled><option value="">3차 분류</option></select>
+      <select id="category4" aria-label="4차 분류" disabled><option value="">4차 분류</option></select>
+      <button id="runCategorySearch" class="search-button" title="카테고리 조사">⌕</button>
+    </div>
+    <div id="keywordSearchRow" class="keyword-search-row hidden">
+      <input id="directKeyword" type="text" placeholder="예: 안전화 깔창">
+      <input id="directCategoryCode" type="text" placeholder="네이버 카테고리 코드(선택)">
+      <button id="runKeywordSearch" class="search-button">⌕</button>
+    </div>
+    <div id="statusLine" class="status-line">카테고리를 선택하고 돋보기를 누르세요.</div>
+  </section>
+
+  <section class="filter-panel">
+    <div class="filter-header">
+      <div><span class="filter-title">필터</span><button id="resetFilters" class="small-button">전체</button></div>
+      <div id="resultSummary" class="summary">조사 전</div>
+    </div>
+    <div class="filters-grid">
+      <div class="filter-block">
+        <h3>기본정보</h3>
+        <label>키워드<input id="filterKeyword" type="text" placeholder="포함할 키워드"></label>
+        <label>경쟁도
+          <div class="range-line"><input id="filterCompetitionMin" type="number" placeholder="최소"><span>~</span><input id="filterCompetitionMax" type="number" placeholder="최대"></div>
+        </label>
+      </div>
+      <div class="filter-block">
+        <h3>트렌드</h3>
+        <label>최근 3개월 증감률
+          <div class="range-line"><input id="filterGrowthMin" type="number" placeholder="최소"><span>~</span><input id="filterGrowthMax" type="number" placeholder="최대"></div>
+        </label>
+        <label>계절성
+          <select id="filterSeasonality"><option value="all">전체</option><option value="low">낮음</option><option value="mid">중간</option><option value="high">높음</option></select>
+        </label>
+      </div>
+      <div class="filter-block">
+        <h3>가격</h3>
+        <label>중앙가격
+          <div class="range-line"><input id="filterPriceMin" type="number" placeholder="최소"><span>~</span><input id="filterPriceMax" type="number" placeholder="최대"></div>
+        </label>
+        <label>표본 수
+          <div class="range-line"><input id="filterSampleMin" type="number" placeholder="최소"><span>~</span><input id="filterSampleMax" type="number" placeholder="최대"></div>
+        </label>
+      </div>
+      <div class="filter-block">
+        <h3>플랫폼</h3>
+        <label>조회 상태
+          <select id="filterStatus"><option value="all">전체</option><option value="ok">정상</option><option value="error">오류 포함</option></select>
+        </label>
+        <button id="applyFilters" class="apply-button">필터 적용</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="results-section">
+    <div class="view-tabs">
+      <button data-tab="naver" class="active">N 네이버 상품</button>
+      <button data-tab="coupang">C 쿠팡</button>
+      <button data-tab="combined">통합 비교</button>
+    </div>
+
+    <div id="naverTab" class="tab-panel active">
+      <div class="table-wrap">
+        <table id="naverTable">
+          <thead>
+            <tr class="group-row">
+              <th rowspan="2">키워드</th>
+              <th rowspan="2">카테고리</th>
+              <th colspan="6" class="trend-group">검색·클릭 추이</th>
+              <th colspan="8" class="naver-group">네이버 상품</th>
+            </tr>
+            <tr>
+              <th>최근지수</th><th>최근3개월</th><th>3개월증감</th><th>전년비</th><th>계절성</th><th>최고시점</th>
+              <th>상품 수</th><th>표본</th><th>최저가</th><th>중앙가</th><th>평균가</th><th>해외배송</th><th>몰 수</th><th>경쟁도</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="coupangTab" class="tab-panel">
+      <div class="table-wrap">
+        <table id="coupangTable">
+          <thead>
+            <tr class="group-row">
+              <th rowspan="2">키워드</th>
+              <th rowspan="2">카테고리</th>
+              <th colspan="6" class="trend-group">검색 추이</th>
+              <th colspan="11" class="coupang-group">쿠팡 공개 검색표본</th>
+            </tr>
+            <tr>
+              <th>최근지수</th><th>최근3개월</th><th>3개월증감</th><th>전년비</th><th>계절성</th><th>최고시점</th>
+              <th>검색결과 수</th><th>표본</th><th>최저가</th><th>중앙가</th><th>평균가</th><th>최대리뷰</th><th>평균리뷰</th><th>로켓</th><th>로켓그로스</th><th>광고</th><th>경쟁도</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="combinedTab" class="tab-panel">
+      <div class="table-wrap">
+        <table id="combinedTable">
+          <thead>
+            <tr class="group-row">
+              <th rowspan="2">키워드</th><th rowspan="2">카테고리</th>
+              <th colspan="4" class="naver-group">네이버</th>
+              <th colspan="4" class="coupang-group">쿠팡</th>
+              <th colspan="3" class="score-group">비교</th>
+            </tr>
+            <tr>
+              <th>상품 수</th><th>중앙가</th><th>해외비율</th><th>경쟁도</th>
+              <th>표본</th><th>중앙가</th><th>로켓비율</th><th>경쟁도</th>
+              <th>가격차</th><th>3개월증감</th><th>판정</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="apiModal" class="modal hidden">
+  <div class="modal-card">
+    <button id="closeApiModal" class="modal-close">×</button>
+    <h2>NAVER API HUB 설정</h2>
+    <p>이 버전은 <strong>검색어 트렌드, 쇼핑 인사이트, 검색 API의 쇼핑</strong> 권한을 사용합니다.</p>
+    <label>Client ID<input id="clientId" type="text" autocomplete="off"></label>
+    <label>Client Secret<input id="clientSecret" type="password" autocomplete="new-password" placeholder="저장된 경우 ********"></label>
+    <div class="modal-actions">
+      <button id="saveApiSettings" class="apply-button">설정 저장</button>
+      <button id="testApiSettings" class="dark-button">저장 후 연결 테스트</button>
+    </div>
+    <div id="apiTestResult" class="api-test-result"></div>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
