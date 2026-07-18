@@ -1,0 +1,39 @@
+name: Validate seller gap webapp
+
+on:
+  push:
+    branches:
+      - seller-gap-webapp-v0.4.0
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate Python syntax
+        run: python -m py_compile seller-gap-webapp-v0.4.0/app.py
+      - name: Validate JavaScript syntax
+        run: node --check seller-gap-webapp-v0.4.0/static/app.js
+      - name: Validate JSON
+        run: python -m json.tool seller-gap-webapp-v0.4.0/data/categories.json > /dev/null
+      - name: Smoke test local server
+        run: |
+          cd seller-gap-webapp-v0.4.0
+          python app.py > /tmp/seller-gap.log 2>&1 &
+          SERVER_PID=$!
+          sleep 3
+          python - <<'PY'
+          import json, urllib.request
+          for url in ('http://127.0.0.1:8000/api/health', 'http://127.0.0.1:8000/api/categories'):
+              with urllib.request.urlopen(url, timeout=5) as r:
+                  data = json.load(r)
+                  assert data
+          PY
+          kill $SERVER_PID
