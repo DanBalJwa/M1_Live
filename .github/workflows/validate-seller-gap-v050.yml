@@ -1,0 +1,49 @@
+name: Validate Seller Gap v0.5.0
+
+on:
+  push:
+    branches:
+      - seller-gap-webapp-v0.5.0
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: seller-gap-webapp-v0.5.0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Python syntax
+        run: python -m py_compile app.py core.py
+      - name: JavaScript syntax
+        run: node --check web/app.js
+      - name: Category and parser smoke tests
+        run: |
+          python - <<'PY'
+          from core import load_categories, generate_keywords, parse_coupang_html
+          categories = load_categories()
+          words = generate_keywords(["패션잡화", "신발", "신발용품", "깔창"], "", 8, categories)
+          assert "안전화깔창" in words
+          html = '''<li class="search-product"><a href="/vp/a"><div class="name">테스트 깔창</div><strong class="price-value">12,900</strong><span class="rating-total-count">(321)</span><span>로켓배송</span></a></li>'''
+          result = parse_coupang_html("깔창", html)
+          assert result["sampleCount"] == 1
+          assert result["prices"]["avg"] == 12900
+          assert result["reviews"]["total"] == 321
+          assert result["delivery"]["rocketRatio"] == 100.0
+          print("smoke tests passed")
+          PY
+      - name: Local server health
+        run: |
+          python app.py >server.log 2>&1 &
+          PID=$!
+          sleep 2
+          curl --fail http://127.0.0.1:8000/api/health
+          curl --fail http://127.0.0.1:8000/api/categories > /dev/null
+          kill $PID
